@@ -9,3 +9,8 @@ male,group D,some college,standard,completed,85,82,85
 female,group E,bachelor's degree,standard,completed,92,95,92
 male,group A,high school,free/reduced,none,40,39,40
 female,group B,associate's degree,standard,completed,88,86,88
+male,group C,some college,standard,completed,65,67,66
+female,group D,master's degree,standard,completed,80,81,79
+male,group E,bachelor's degree,standard,none,55,57,56
+female,group A,high school,free/reduced,completed,60,62,61
+male,group B,some college,standard,completed,95,94,96

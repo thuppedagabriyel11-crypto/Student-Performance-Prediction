@@ -30,10 +30,10 @@ for col in data.columns:
         data[col] = le.fit_transform(data[col])
         encoders[col] = le
 
-27 X = data.drop("math score", axis=1)
-28 y = data["math score"]
-29 X = X.astype(float)
-30 y = y.astype(float)
+X = data.drop("math score", axis=1)
+y = data["math score"]
+X = X.astype(float)
+y = y.astype(float)
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42

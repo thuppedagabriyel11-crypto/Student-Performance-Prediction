@@ -12,86 +12,127 @@ st.title("🎓 Student Performance AI Predictor")
 # Load Dataset
 df = pd.read_csv("student_data.csv")
 df.columns = df.columns.str.strip()
-df["reading score"] = pd.to_numeric(df["reading score"], errors="coerce")
-df["writing score"] = pd.to_numeric(df["writing score"], errors="coerce")
-df["math score"] = pd.to_numeric(df["math score"], errors="coerce")
 df = df.dropna()
 
 st.subheader("Dataset Preview")
 st.dataframe(df)
 
-# Encode categorical columns
+# Encode Categorical Columns
 data = df.copy()
+
 encoders = {}
 
-for col in data.columns:
-    if data[col].dtype == "object":
-        le = LabelEncoder()
-        data[col] = le.fit_transform(data[col])
-        encoders[col] = le
+for col in [
+    "gender",
+    "race/ethnicity",
+    "parental level of education",
+    "lunch",
+    "test preparation course"
+]:
+    le = LabelEncoder()
+    data[col] = le.fit_transform(data[col].astype(str))
+    encoders[col] = le
 
-X = data.drop("math score", axis=1)
+# Convert score columns to numeric
+for col in ["reading score", "writing score", "math score"]:
+    data[col] = pd.to_numeric(data[col], errors="coerce")
+
+data = data.dropna()
+
+# Features & Target
+X = data[
+    [
+        "gender",
+        "race/ethnicity",
+        "parental level of education",
+        "lunch",
+        "test preparation course",
+        "reading score",
+        "writing score",
+    ]
+]
+
 y = data["math score"]
-X = X.astype(float)
-y = y.astype(float)
 
+# Train/Test Split
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
 )
 
-model = RandomForestRegressor(n_estimators=100, random_state=42)
+# Train Model
+model = RandomForestRegressor(
+    n_estimators=100,
+    random_state=42
+)
+
 model.fit(X_train, y_train)
 
 pred = model.predict(X_test)
 
-st.success(f"Model Accuracy : {round(r2_score(y_test, pred)*100,2)}%")
+accuracy = r2_score(y_test, pred)
 
-st.subheader("Predict Student Score")
+st.success(f"Model Accuracy : {round(accuracy*100,2)} %")
+
+st.subheader("Predict Student Math Score")
 
 gender = st.selectbox("Gender", df["gender"].unique())
-race = st.selectbox("Race", df["race/ethnicity"].unique())
+
+race = st.selectbox(
+    "Race/Ethnicity",
+    df["race/ethnicity"].unique()
+)
+
 parent = st.selectbox(
     "Parental Education",
     df["parental level of education"].unique()
 )
-lunch = st.selectbox("Lunch", df["lunch"].unique())
+
+lunch = st.selectbox(
+    "Lunch",
+    df["lunch"].unique()
+)
+
 prep = st.selectbox(
     "Test Preparation",
     df["test preparation course"].unique()
 )
 
-reading = st.number_input(
+reading = st.slider(
     "Reading Score",
-    min_value=0,
-    max_value=100,
-    value=70
+    0,
+    100,
+    70
 )
 
-writing = st.number_input(
+writing = st.slider(
     "Writing Score",
-    min_value=0,
-    max_value=100,
-    value=70
+    0,
+    100,
+    70
 )
 
 if st.button("Predict"):
 
-    input_data = pd.DataFrame({
-        "gender": [gender],
-        "race/ethnicity": [race],
-        "parental level of education": [parent],
-        "lunch": [lunch],
-        "test preparation course": [prep],
-        "reading score": [reading],
-        "writing score": [writing]
+    input_df = pd.DataFrame({
+        "gender":[gender],
+        "race/ethnicity":[race],
+        "parental level of education":[parent],
+        "lunch":[lunch],
+        "test preparation course":[prep],
+        "reading score":[reading],
+        "writing score":[writing]
     })
 
-    for col in input_data.columns:
-        if col in encoders:
-            input_data[col] = encoders[col].transform(input_data[col])
+    for col in encoders:
+        input_df[col] = encoders[col].transform(
+            input_df[col].astype(str)
+        )
 
-    result = model.predict(input_data)
+    prediction = model.predict(input_df)
 
     st.success(
-        f"🎯 Predicted Math Score : {round(result[0],2)}"
+        f"🎯 Predicted Math Score : {round(prediction[0],2)}"
     )

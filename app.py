@@ -10,12 +10,12 @@ st.set_page_config(page_title="Student Performance AI", page_icon="🎓")
 st.title("🎓 Student Performance AI Predictor")
 
 # Load Dataset
-12 df = pd.read_csv("student_data.csv")
-13 df.columns = df.columns.str.strip()
-14 df["reading score"] = pd.to_numeric(df["reading score"], errors="coerce")
-15 df["writing score"] = pd.to_numeric(df["writing score"], errors="coerce")
-16 df["math score"] = pd.to_numeric(df["math score"], errors="coerce")
-17 df = df.dropna()
+df = pd.read_csv("student_data.csv")
+df.columns = df.columns.str.strip()
+df["reading score"] = pd.to_numeric(df["reading score"], errors="coerce")
+df["writing score"] = pd.to_numeric(df["writing score"], errors="coerce")
+df["math score"] = pd.to_numeric(df["math score"], errors="coerce")
+df = df.dropna()
 
 st.subheader("Dataset Preview")
 st.dataframe(df)

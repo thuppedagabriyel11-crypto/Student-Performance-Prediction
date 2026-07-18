@@ -10,8 +10,12 @@ st.set_page_config(page_title="Student Performance AI", page_icon="🎓")
 st.title("🎓 Student Performance AI Predictor")
 
 # Load Dataset
-df = pd.read_csv("student_data.csv")
-df = df.dropna()
+12 df = pd.read_csv("student_data.csv")
+13 df.columns = df.columns.str.strip()
+14 df["reading score"] = pd.to_numeric(df["reading score"], errors="coerce")
+15 df["writing score"] = pd.to_numeric(df["writing score"], errors="coerce")
+16 df["math score"] = pd.to_numeric(df["math score"], errors="coerce")
+17 df = df.dropna()
 
 st.subheader("Dataset Preview")
 st.dataframe(df)
@@ -26,8 +30,10 @@ for col in data.columns:
         data[col] = le.fit_transform(data[col])
         encoders[col] = le
 
-X = data.drop("math score", axis=1)
-y = data["math score"]
+27 X = data.drop("math score", axis=1)
+28 y = data["math score"]
+29 X = X.astype(float)
+30 y = y.astype(float)
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42

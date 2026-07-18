@@ -1,197 +1,91 @@
 import streamlit as st
 import pandas as pd
-
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import r2_score, mean_absolute_error
+from sklearn.metrics import r2_score
 
+st.set_page_config(page_title="Student Performance AI", page_icon="🎓")
 
-st.set_page_config(
-    page_title="Student Performance AI",
-    page_icon="🎓",
-    layout="wide"
-)
+st.title("🎓 Student Performance AI Predictor")
 
+# Load Dataset
+df = pd.read_csv("student_data.csv")
+df = df.dropna()
 
-st.markdown("""
-<style>
+st.subheader("Dataset Preview")
+st.dataframe(df)
 
-.stApp {
-background: linear-gradient(135deg,#0f172a,#2563eb,#7c3aed);
-}
-
-h1,h2,h3,p,label {
-color:white !important;
-}
-
-.box{
-background:rgba(255,255,255,0.15);
-padding:20px;
-border-radius:20px;
-}
-
-.stButton button{
-background:#06b6d4;
-color:white;
-border-radius:15px;
-padding:10px 25px;
-}
-
-</style>
-""",unsafe_allow_html=True)
-
-
-
-st.markdown(
-"""
-<div class="box">
-
-<h1>🎓 Student Performance AI Predictor</h1>
-
-<h3>
-Machine Learning Based Student Score Prediction
-</h3>
-
-</div>
-""",
-unsafe_allow_html=True
-)
-
-
-
-@st.cache_data
-def load_data():
-    return pd.read_csv("student_data.csv")
-
-
-df = load_data()
-
-
-st.subheader("📊 Dataset Preview")
-
-st.dataframe(
-    df,
-    use_container_width=True
-)
-
-
-
-data=df.copy()
-
-
-encoder=LabelEncoder()
-
+# Encode categorical columns
+data = df.copy()
+encoders = {}
 
 for col in data.columns:
+    if data[col].dtype == "object":
+        le = LabelEncoder()
+        data[col] = le.fit_transform(data[col])
+        encoders[col] = le
 
-    if data[col].dtype=="object":
+X = data.drop("math score", axis=1)
+y = data["math score"]
 
-        data[col]=encoder.fit_transform(data[col])
-
-
-
-X=data.drop(
-    "math score",
-    axis=1
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
 )
 
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
 
-y=data["math score"]
+pred = model.predict(X_test)
 
+st.success(f"Model Accuracy : {round(r2_score(y_test, pred)*100,2)}%")
 
+st.subheader("Predict Student Score")
 
-X_train,X_test,y_train,y_test=train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    random_state=42
+gender = st.selectbox("Gender", df["gender"].unique())
+race = st.selectbox("Race", df["race/ethnicity"].unique())
+parent = st.selectbox(
+    "Parental Education",
+    df["parental level of education"].unique()
+)
+lunch = st.selectbox("Lunch", df["lunch"].unique())
+prep = st.selectbox(
+    "Test Preparation",
+    df["test preparation course"].unique()
 )
 
-
-
-model=RandomForestRegressor(
-    n_estimators=100,
-    random_state=42
+reading = st.number_input(
+    "Reading Score",
+    min_value=0,
+    max_value=100,
+    value=70
 )
 
-
-model.fit(
-    X_train,
-    y_train
+writing = st.number_input(
+    "Writing Score",
+    min_value=0,
+    max_value=100,
+    value=70
 )
 
+if st.button("Predict"):
 
+    input_data = pd.DataFrame({
+        "gender": [gender],
+        "race/ethnicity": [race],
+        "parental level of education": [parent],
+        "lunch": [lunch],
+        "test preparation course": [prep],
+        "reading score": [reading],
+        "writing score": [writing]
+    })
 
-prediction=model.predict(
-    X_test
-)
+    for col in input_data.columns:
+        if col in encoders:
+            input_data[col] = encoders[col].transform(input_data[col])
 
-
-
-accuracy=r2_score(
-    y_test,
-    prediction
-)
-
-
-error=mean_absolute_error(
-    y_test,
-    prediction
-)
-
-
-
-st.subheader("🤖 Model Performance")
-
-
-col1,col2=st.columns(2)
-
-
-with col1:
-    st.metric(
-        "Accuracy",
-        str(round(accuracy*100,2))+"%"
-    )
-
-
-with col2:
-    st.metric(
-        "Error",
-        round(error,2)
-    )
-
-
-
-st.subheader("🔮 Predict Student Score")
-
-
-inputs={}
-
-
-for col in X.columns:
-
-    inputs[col]=st.number_input(
-        col,
-        min_value=0,
-        max_value=100,
-        value=50
-    )
-
-
-input_df=pd.DataFrame(
-    [inputs]
-)
-
-
-
-if st.button("Predict Score"):
-
-    result=model.predict(
-        input_df
-    )
+    result = model.predict(input_data)
 
     st.success(
-        "Predicted Math Score : "
-        +str(round(result[0],2))
+        f"🎯 Predicted Math Score : {round(result[0],2)}"
     )
